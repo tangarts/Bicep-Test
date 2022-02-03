@@ -1,4 +1,4 @@
-module cosmos './cosmos-account-with-standard-througput.bicep' = {
+module cosmos './modules/cosmos-account-with-standard-througput.bicep' = {
   name: 'cosmos'
   params: {
     primaryRegion: 'North Europe'
@@ -6,7 +6,7 @@ module cosmos './cosmos-account-with-standard-througput.bicep' = {
   }
 }
 
-module storedProcedures './cosmos-container-with-server-side.bicep' = {
+module storedProcedures './modules/cosmos-container-with-server-side.bicep' = {
   name: 'storedProcedures'
   params: {
     containerName: cosmos.outputs.containerName
