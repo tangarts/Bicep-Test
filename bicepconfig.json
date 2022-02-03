@@ -1,0 +1,22 @@
+{
+    "moduleAliases": {
+      "br": {
+        "cosmosRegistry": {
+          "registry": "acrrtixgjehiudtq.azurecr.io"
+        },
+        "storage": {
+          "registry": "acrrtixgjehiudtq.azurecr.io",
+          "modulePath": "bicep/modules/cosmos/storage"
+        },
+        "localstorage": {
+            "registry": "."
+          }
+      },
+      "ts": {
+        "CoreSpecs": {
+          "subscription": "00000000-0000-0000-0000-000000000000",
+          "resourceGroup": "CoreSpecsRG"
+        }
+      }
+    }
+  }

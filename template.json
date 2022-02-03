@@ -1,0 +1,189 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "databaseAccounts_cdb_benchmark_name": {
+            "defaultValue": "cdb-benchmark",
+            "type": "String"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.DocumentDB/databaseAccounts",
+            "apiVersion": "2021-10-15",
+            "name": "[parameters('databaseAccounts_cdb_benchmark_name')]",
+            "location": "North Europe",
+            "tags": {
+                "defaultExperience": "Core (SQL)",
+                "hidden-cosmos-mmspecial": ""
+            },
+            "kind": "GlobalDocumentDB",
+            "identity": {
+                "type": "None"
+            },
+            "properties": {
+                "publicNetworkAccess": "Enabled",
+                "enableAutomaticFailover": false,
+                "enableMultipleWriteLocations": false,
+                "isVirtualNetworkFilterEnabled": false,
+                "virtualNetworkRules": [],
+                "disableKeyBasedMetadataWriteAccess": false,
+                "enableFreeTier": true,
+                "enableAnalyticalStorage": true,
+                "analyticalStorageConfiguration": {
+                    "schemaType": "WellDefined"
+                },
+                "databaseAccountOfferType": "Standard",
+                "defaultIdentity": "FirstPartyIdentity",
+                "networkAclBypass": "None",
+                "disableLocalAuth": false,
+                "consistencyPolicy": {
+                    "defaultConsistencyLevel": "BoundedStaleness",
+                    "maxIntervalInSeconds": 305,
+                    "maxStalenessPrefix": 100000
+                },
+                "locations": [
+                    {
+                        "locationName": "North Europe",
+                        "provisioningState": "Succeeded",
+                        "failoverPriority": 0,
+                        "isZoneRedundant": false
+                    }
+                ],
+                "cors": [],
+                "capabilities": [],
+                "ipRules": [],
+                "backupPolicy": {
+                    "type": "Periodic",
+                    "periodicModeProperties": {
+                        "backupIntervalInMinutes": 240,
+                        "backupRetentionIntervalInHours": 8,
+                        "backupStorageRedundancy": "Geo"
+                    }
+                },
+                "networkAclBypassResourceIds": []
+            }
+        },
+        {
+            "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases",
+            "apiVersion": "2021-10-15",
+            "name": "[concat(parameters('databaseAccounts_cdb_benchmark_name'), '/testdb')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('databaseAccounts_cdb_benchmark_name'))]"
+            ],
+            "properties": {
+                "resource": {
+                    "id": "testdb"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions",
+            "apiVersion": "2021-10-15",
+            "name": "[concat(parameters('databaseAccounts_cdb_benchmark_name'), '/00000000-0000-0000-0000-000000000001')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('databaseAccounts_cdb_benchmark_name'))]"
+            ],
+            "properties": {
+                "roleName": "Cosmos DB Built-in Data Reader",
+                "type": "BuiltInRole",
+                "assignableScopes": [
+                    "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('databaseAccounts_cdb_benchmark_name'))]"
+                ],
+                "permissions": [
+                    {
+                        "dataActions": [
+                            "Microsoft.DocumentDB/databaseAccounts/readMetadata",
+                            "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/executeQuery",
+                            "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/readChangeFeed",
+                            "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/items/read"
+                        ],
+                        "notDataActions": []
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions",
+            "apiVersion": "2021-10-15",
+            "name": "[concat(parameters('databaseAccounts_cdb_benchmark_name'), '/00000000-0000-0000-0000-000000000002')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('databaseAccounts_cdb_benchmark_name'))]"
+            ],
+            "properties": {
+                "roleName": "Cosmos DB Built-in Data Contributor",
+                "type": "BuiltInRole",
+                "assignableScopes": [
+                    "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('databaseAccounts_cdb_benchmark_name'))]"
+                ],
+                "permissions": [
+                    {
+                        "dataActions": [
+                            "Microsoft.DocumentDB/databaseAccounts/readMetadata",
+                            "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/*",
+                            "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/items/*"
+                        ],
+                        "notDataActions": []
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers",
+            "apiVersion": "2021-10-15",
+            "name": "[concat(parameters('databaseAccounts_cdb_benchmark_name'), '/testdb/testcol')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', parameters('databaseAccounts_cdb_benchmark_name'), 'testdb')]",
+                "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('databaseAccounts_cdb_benchmark_name'))]"
+            ],
+            "properties": {
+                "resource": {
+                    "id": "testcol",
+                    "indexingPolicy": {
+                        "indexingMode": "consistent",
+                        "automatic": true,
+                        "includedPaths": [
+                            {
+                                "path": "/*"
+                            }
+                        ],
+                        "excludedPaths": [
+                            {
+                                "path": "/\"_etag\"/?"
+                            }
+                        ]
+                    },
+                    "partitionKey": {
+                        "paths": [
+                            "/pk"
+                        ],
+                        "kind": "Hash"
+                    },
+                    "uniqueKeyPolicy": {
+                        "uniqueKeys": []
+                    },
+                    "conflictResolutionPolicy": {
+                        "mode": "LastWriterWins",
+                        "conflictResolutionPath": "/_ts"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/throughputSettings",
+            "apiVersion": "2021-10-15",
+            "name": "[concat(parameters('databaseAccounts_cdb_benchmark_name'), '/testdb/testcol/default')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers', parameters('databaseAccounts_cdb_benchmark_name'), 'testdb', 'testcol')]",
+                "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', parameters('databaseAccounts_cdb_benchmark_name'), 'testdb')]",
+                "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('databaseAccounts_cdb_benchmark_name'))]"
+            ],
+            "properties": {
+                "resource": {
+                    "throughput": 400
+                }
+            }
+        }
+    ]
+}

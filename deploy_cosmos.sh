@@ -1,0 +1,1 @@
+az deployment group create --name cosmos-from-bicep --resource-group cosmic-bicep --template-file main.bicep 
